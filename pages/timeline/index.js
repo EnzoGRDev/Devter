@@ -1,18 +1,16 @@
-import Link from 'next/link'
-import AppLayout from '../../components/AppLayout'
+import Link from "next/link"
+import AppLayout from "../../components/AppLayout"
 
-export default function Timeline({name}){
+export default function Timeline({ name }) {
   return (
     <>
-    <AppLayout>
-      <h1>This is a Timeline for {name}</h1>
-      <Link href="/"> 
-        <a>
-          Home
-        </a>
-      </Link>
-    </AppLayout>
-    <style jsx>{`
+      <AppLayout>
+        <h1>This is a Timeline for {name}</h1>
+        <Link href="/">
+          <a>Home</a>
+        </Link>
+      </AppLayout>
+      <style jsx>{`
         h1 {
           font-size: 36px;
           color: red;
@@ -22,8 +20,6 @@ export default function Timeline({name}){
   )
 }
 
-
-Timeline.getInitialProps = () =>{
-  return fetch("http://localhost:3000/api/hello")
-    .then(res => res.json())
+Timeline.getInitialProps = () => {
+  return fetch("http://localhost:3000/api/hello").then((res) => res.json())
 }
