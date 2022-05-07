@@ -1,9 +1,11 @@
 import { colors } from "../../styles/theme"
 
-export default function Button({ children, onClick }) {
+export default function Button({ children, onClick, disabled }) {
   return (
     <>
-      <button onClick={onClick}>{children}</button>
+      <button onClick={onClick} disabled={disabled}>
+        {children}
+      </button>
       <style jsx>{`
         button {
           align-items: center;
@@ -20,7 +22,14 @@ export default function Button({ children, onClick }) {
         }
         button > :global(svg) {
           margin-right: 8px;
+          user-select: none;
+          pointer-events: none;
         }
+
+        button[disabled] {
+          opacity: 0.3;
+        }
+
         button:hover {
           opacity: 0.7;
         }

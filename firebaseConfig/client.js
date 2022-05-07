@@ -8,6 +8,14 @@ import {
   onAuthStateChanged,
   getModularInstance,
 } from "firebase/auth"
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  Timestamp,
+  getDocs,
+  getDoc,
+} from "firebase/firestore"
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -25,15 +33,17 @@ const firebaseConfig = {
 }
 
 // Initialize Firebase
-getApps().length === 0 && initializeApp(firebaseConfig)
-const app = getApp()
+// getApps().length === 0 && initializeApp(firebaseConfig)
+
+// const app = getApp()
+const app = initializeApp(firebaseConfig)
 const authApp = getAuth(app)
+const db = getFirestore(app)
 
-function mapUserFromFirebaseAuthTo({ _tokenResponse, reloadUserInfo }) {
-  console.log(_tokenResponse, reloadUserInfo)
-
-  const { photoUrl, screenName } = _tokenResponse || reloadUserInfo
-  return { photo: photoUrl, username: screenName }
+function mapUserFromFirebaseAuthTo(user) {
+  console.log(user)
+  const { photoURL, displayName, email, uid } = user
+  return { photo: photoURL, username: displayName, email, uid }
 }
 
 export function handleOnAuthStateChanged(onChange) {
@@ -48,4 +58,38 @@ export default function loginWithGithub() {
   return signInWithPopup(authApp, githubProvider)
     .then(mapUserFromFirebaseAuthTo)
     .catch((error) => console.error(error))
+}
+
+export const addDevit = ({ avatar, userId, userName, content }) => {
+  const devitsCollection = collection(db, "devits")
+  return addDoc(devitsCollection, {
+    avatar,
+    content,
+    userId,
+    userName,
+    createdAt: Timestamp.fromDate(new Date()),
+    likesCount: 0,
+    sharedCount: 0,
+  })
+}
+
+export const fetchLatestDevits = () => {
+  const devitsCollection = collection(db, "devits")
+  return getDocs(devitsCollection)
+    .then((snapshot) => {
+      return snapshot.docs.map((doc) => {
+        const data = doc.data()
+        const id = doc.id
+        const intl = new Intl.DateTimeFormat("es-ES")
+        const normalizedCreatedAt = intl.format(
+          new Date(data.createdAt.seconds * 1000)
+        )
+        return {
+          ...data,
+          id,
+          createdAt: normalizedCreatedAt,
+        }
+      })
+    })
+    .catch((error) => error)
 }
