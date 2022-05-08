@@ -1,6 +1,5 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app"
-import { getAnalytics } from "firebase/analytics"
 import {
   GithubAuthProvider,
   signInWithPopup,
@@ -14,8 +13,11 @@ import {
   addDoc,
   Timestamp,
   getDocs,
-  getDoc,
+  query,
+  orderBy,
+  limit,
 } from "firebase/firestore"
+import { getStorage, ref, uploadBytesResumable } from "firebase/storage"
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -39,6 +41,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 const authApp = getAuth(app)
 const db = getFirestore(app)
+const storage = getStorage(app)
 
 function mapUserFromFirebaseAuthTo(user) {
   console.log(user)
@@ -60,13 +63,14 @@ export default function loginWithGithub() {
     .catch((error) => console.error(error))
 }
 
-export const addDevit = ({ avatar, userId, userName, content }) => {
+export const addDevit = ({ avatar, userId, userName, content, img }) => {
   const devitsCollection = collection(db, "devits")
   return addDoc(devitsCollection, {
     avatar,
     content,
     userId,
     userName,
+    img,
     createdAt: Timestamp.fromDate(new Date()),
     likesCount: 0,
     sharedCount: 0,
@@ -75,21 +79,27 @@ export const addDevit = ({ avatar, userId, userName, content }) => {
 
 export const fetchLatestDevits = () => {
   const devitsCollection = collection(db, "devits")
-  return getDocs(devitsCollection)
+  const q = query(devitsCollection, orderBy("createdAt", "desc"))
+
+  return getDocs(q)
     .then((snapshot) => {
       return snapshot.docs.map((doc) => {
         const data = doc.data()
         const id = doc.id
-        const intl = new Intl.DateTimeFormat("es-ES")
-        const normalizedCreatedAt = intl.format(
-          new Date(data.createdAt.seconds * 1000)
-        )
+        const { createdAt } = data
+
         return {
           ...data,
           id,
-          createdAt: normalizedCreatedAt,
+          createdAt: +createdAt.toDate(),
         }
       })
     })
     .catch((error) => error)
+}
+
+export const uploadImage = (file) => {
+  const refImages = ref(storage, `images/${file.name}`)
+  const task = uploadBytesResumable(refImages, file)
+  return task
 }
